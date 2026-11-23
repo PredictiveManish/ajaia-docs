@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}History - {{ doc['title'] }}{% endblock %}
+{% block body %}
+<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:18px">
+  <div>
+    <h1 style="margin:0">History</h1>
+    <p class="muted" style="margin:4px 0 0">{{ doc['title'] }}</p>
+  </div>
+  <a class="btn" href="/documents/{{ doc['id'] }}">Back to editor</a>
+</div>
+
+<p class="muted">Each entry shows what changed in that save, compared with the current text. Green is added since, red is removed since.</p>
+
+{% if versions %}
+  {% for v in versions %}
+  <div class="ver">
+    <div class="head">
+      <div>
+        <strong>{{ v['created_at'][:16].replace('T',' ') }} UTC</strong>
+        {% if v['who'] %}<span class="muted">by {{ v['who'] }}</span>{% endif %}
+        {% if v['is_current'] %}<span class="tag" style="margin-left:6px">current</span>{% endif %}
+      </div>
+      {% if not v['is_current'] %}
+      <form method="post" action="/documents/{{ doc['id'] }}/restore/{{ v['id'] }}">
+        <button type="submit" style="font-size:13px;padding:5px 12px">Restore this version</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="diffbox">{{ v['diff']|safe }}</div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty">No saved versions yet. Edit the document and versions will appear here.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}My documents - Ajaia Docs{% endblock %}
+{% block body %}
+<div class="hero">
+  <div>
+    <h1>My documents</h1>
+    <p class="muted">{{ owned|length }} owned &middot; {{ shared|length }} shared with you</p>
+  </div>
+  <form method="post" action="/documents">
+    <button class="primary big" type="submit">+ New document</button>
+  </form>
+</div>
+
+<details class="import">
+  <summary>Import a file instead</summary>
+  <form method="post" action="/upload" enctype="multipart/form-data" class="row" style="margin-top:12px">
+    <input type="file" name="file" accept=".txt,.md,.docx" required>
+    <button type="submit">Import as document</button>
+    <span class="muted">.txt, .md or .docx &middot; up to {{ max_mb }} MB</span>
+  </form>
+</details>
+
+<section>
+  <h2>Owned by you</h2>
+  {% if owned %}
+    {% for d in owned %}
+    <a class="card link" href="/documents/{{ d['id'] }}">
+      <div>
+        <div class="title">{{ d['title'] }}</div>
+        <div class="muted">Updated {{ d['updated_at'][:16].replace('T',' ') }} UTC</div>
+      </div>
+      <span class="tag">Owner</span>
+    </a>
+    {% endfor %}
+  {% else %}<div class="empty">No documents yet. Use <strong>+ New document</strong> above.</div>{% endif %}
+</section>
+
+<section>
+  <h2>Shared with you</h2>
+  {% if shared %}
+    {% for d in shared %}
+    <a class="card link" href="/documents/{{ d['id'] }}">
+      <div>
+        <div class="title">{{ d['title'] }}</div>
+        <div class="muted">Owned by {{ d['owner_name'] }}</div>
+      </div>
+      <span class="tag">Shared</span>
+    </a>
+    {% endfor %}
+  {% else %}<div class="empty">Nothing shared with you yet.</div>{% endif %}
+</section>
+{% endblock %}

@@ -3,6 +3,10 @@
 **Candidate:** Manish Tiwari
 **Role:** AI-Native Full Stack Developer
 
+All materials in one folder: [Drive Link](https://drive.google.com/drive/folders/11r17tQM_bqbjuhxE7dHikgxYviA7mVVi?usp=sharing)
+
+[Code](https://github.com/PredictiveManish/ajaia-docs)
+
 ## Included in this folder
 
 | Item | File |
@@ -18,11 +22,11 @@
 
 ## Live deployment
 
-DEPLOY_URL_HERE
+[Live URL](https://ajaia-docs-3aps.onrender.com/)
 
 ## Test accounts
 
-Password `demo123` for all three: `manish`, `priya`, `alex`.
+Password `demo123` for all three: `manish`, `priya`, `alex`. (This is for demo purpose that code files directly leak these informations I am aware of it)
 
 To test sharing: sign in as `manish`, open a document, share with `priya`, sign out, sign in as `priya`.
 

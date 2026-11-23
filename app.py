@@ -1,7 +1,7 @@
 import os, re, sqlite3, hashlib, difflib, html as htmlmod
 from datetime import datetime, timezone
 from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -89,6 +89,18 @@ def snapshot(doc_id: int, content: str, uid: int):
                   (doc_id, doc_id, HISTORY_KEEP))
         c.commit()
     c.close()
+
+def clean_for_pdf(html_str: str) -> str:
+    """fpdf2's write_html understands basic tags only. Strip Quill's classes/styles."""
+    s = html_str or ""
+    s = re.sub(r'\s(class|style|data-[a-z-]+|spellcheck|contenteditable)="[^"]*"', "", s)
+    s = re.sub(r"<span[^>]*>|</span>", "", s)
+    s = re.sub(r"<p>\s*(<br\s*/?>)?\s*</p>", "", s)
+    s = re.sub(r"<br\s*/?>", "<br/>", s)
+    s = re.sub(r"<(div|section|article)[^>]*>", "<p>", s)
+    s = s.replace("</div>", "</p>").replace("</section>", "").replace("</article>", "")
+    return s.strip()
+
 
 def text_lines(html_str: str):
     """Flatten stored HTML into readable lines so a diff means something to a human."""
@@ -245,6 +257,50 @@ def unshare_doc(request: Request, doc_id: int, user_id: int = Form(...)):
     c = db(); c.execute("DELETE FROM shares WHERE doc_id=? AND user_id=?", (doc_id, user_id))
     c.commit(); c.close()
     return RedirectResponse(f"/documents/{doc_id}", status_code=303)
+
+@app.get("/documents/{doc_id}/export.pdf")
+def export_pdf(request: Request, doc_id: int):
+    u = current_user(request)
+    if not u: return LOGIN()
+    d, role = can_access(doc_id, u["id"])
+    if not d: raise HTTPException(404, "Document not found")
+    if not role: raise HTTPException(403, "You do not have access to this document")
+
+    from fpdf import FPDF
+    pdf = FPDF(format="A4")
+    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf.add_page()
+    pdf.set_margins(18, 18, 18)
+
+    # title
+    pdf.set_font("Helvetica", "B", 20)
+    pdf.multi_cell(0, 9, d["title"])
+    pdf.ln(2)
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(120, 120, 120)
+    pdf.cell(0, 5, f"Exported from Ajaia Docs  |  {now()[:16].replace('T', ' ')} UTC")
+    pdf.ln(9)
+    pdf.set_text_color(0, 0, 0)
+
+    body = clean_for_pdf(d["content"])
+    if not body:
+        pdf.set_font("Helvetica", "I", 11)
+        pdf.multi_cell(0, 6, "(This document is empty.)")
+    else:
+        try:
+            pdf.write_html(body, warn_on_tags_not_matching=False)
+        except Exception:
+            # last resort: never fail an export because of an odd tag
+            pdf.set_font("Helvetica", "", 11)
+            for line in text_lines(d["content"]):
+                pdf.multi_cell(0, 6, line)
+                pdf.ln(1)
+
+    raw = bytes(pdf.output())
+    safe = re.sub(r"[^A-Za-z0-9._-]+", "_", d["title"])[:60] or "document"
+    return Response(content=raw, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{safe}.pdf"'})
+
 
 @app.get("/documents/{doc_id}/history", response_class=HTMLResponse)
 def history(request: Request, doc_id: int):

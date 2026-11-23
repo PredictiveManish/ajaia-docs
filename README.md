@@ -39,7 +39,7 @@ The SQLite file `docs.db` is created automatically and seeded with the three use
 pytest -q
 ```
 
-Eleven tests covering authentication enforcement, ownership enforcement, sharing grants and revocation, persistence across requests, upload validation, `.docx` import, and version-history deduplication.
+Thirteen tests covering authentication enforcement, ownership enforcement, sharing grants and revocation, persistence across requests, upload validation, `.docx` import, version-history deduplication, PDF export, and PDF access control.
 
 ## Upload size limit
 
@@ -67,11 +67,12 @@ Any host that runs Python works. On Render:
 - Share a document with another user; owned and shared are listed separately
 - Revoke a share
 - **Version history**: every distinct save is snapshotted, with a line-level diff against the current text and one-click restore
+- **Export to PDF**: one click in the editor downloads a paginated PDF with headings, bold, italic and lists preserved
 
 ## What is not supported
 
 - Real-time co-editing (no CRDT or OT)
 - Concurrent-edit conflict resolution (last write wins)
-- Comments, suggestion mode, PDF export
+- Comments and suggestion mode
 - Password reset, signup, email verification
 - Side-by-side version comparison; the diff is inline against the current text only

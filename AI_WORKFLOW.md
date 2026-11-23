@@ -35,6 +35,10 @@ This is the part worth reading, because it is where the four hours actually went
 - **Manual pass through the real flow**: sign in as `manish`, create, format with every toolbar button, reload and confirm formatting survives, share with `priya`, sign out, sign in as `priya`, confirm it appears under "Shared with you" and is editable, confirm `priya` cannot delete it.
 - **Deliberate negative checks**: open a document ID that does not exist (404), open one not shared with me (403), upload a `.exe` (400), upload a non-UTF-8 file (400).
 
+## A note on the PDF export
+
+I asked for WeasyPrint first because it produces better typography. It needs Pango and Cairo, which are system packages, and the deploy target is a bare container. I rejected it and used fpdf2 instead, which is pure Python. That was my call, not the AI's: the AI proposed the nicer library without accounting for what the host would have installed.
+
 ## Where I chose not to use AI
 
 The access-control model, the scope cuts, the decision to drop real-time collaboration, and the choice to build version history instead were mine. Those are the judgement calls the brief is asking about, and outsourcing them would have defeated the exercise.

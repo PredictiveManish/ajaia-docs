@@ -105,3 +105,20 @@ def test_shared_user_can_view_history():
     client.post(f"/documents/{doc_id}/share", data={"user_id": 2})
     logout(); login("priya")
     assert client.get(f"/documents/{doc_id}/history").status_code == 200
+
+def test_pdf_export_returns_a_real_pdf():
+    logout(); login("manish")
+    doc_id = client.post("/documents", data={"title": "Export me"}).headers["location"].rsplit("/",1)[-1]
+    client.post(f"/documents/{doc_id}/save",
+                json={"content": "<h2>Heading</h2><p><strong>Bold</strong> and <em>italic</em></p><ul><li>one</li><li>two</li></ul>"})
+    r = client.get(f"/documents/{doc_id}/export.pdf")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("application/pdf")
+    assert r.content[:5] == b"%PDF-", "response is not a PDF"
+    assert "attachment" in r.headers.get("content-disposition", "")
+
+def test_pdf_export_blocked_without_access():
+    logout(); login("manish")
+    doc_id = client.post("/documents", data={"title": "Private"}).headers["location"].rsplit("/",1)[-1]
+    logout(); login("alex")
+    assert client.get(f"/documents/{doc_id}/export.pdf").status_code == 403

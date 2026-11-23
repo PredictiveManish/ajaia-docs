@@ -30,6 +30,16 @@ Restore writes the old content back as the current document and snapshots that, 
 
 **Known gap:** the diff compares each version against the *current* text, not against the version immediately before it. For a document with many saves this answers "what is different from now", which is what someone deciding whether to restore actually wants, but it is not a true commit-by-commit log.
 
+## PDF export
+
+`GET /documents/{id}/export.pdf` builds the file server-side with **fpdf2**, which is pure Python and needs no system libraries. That mattered: WeasyPrint would have produced nicer output but requires Pango and Cairo, which are exactly the packages that fail to install on a bare container and turn a working demo into a broken deploy.
+
+`fpdf2.write_html()` understands headings, paragraphs, bold, italic, underline and both list types, which is precisely the formatting the editor exposes. Quill's output carries `class`, `style` and `data-*` attributes that the parser does not expect, so `clean_for_pdf()` strips those and normalises `<br>` and stray empty paragraphs first.
+
+Two deliberate safety nets: if `write_html` throws on an unusual tag, the route falls back to flattening the document to plain text rather than returning a 500; and an empty document exports a PDF saying so instead of a blank page. An export that fails is worse than an export that is plain.
+
+**Known limitation:** fpdf2's core fonts are Latin-1. Non-Latin scripts (Devanagari, Tamil, Bengali and so on) will not render without embedding a TTF and calling `set_fallback_fonts`. That is a one-line fix once a font file is shipped, but it is out of scope here and worth stating plainly rather than discovering in a demo.
+
 ## Upload limit, and why it is 10 MB
 
 My first version used 1 MB, which was arbitrary. The real constraints are:
@@ -68,8 +78,9 @@ My first version used 1 MB, which was arbitrary. The real constraints are:
 
 ## What I would build next with 2-4 more hours
 
-1. Optimistic concurrency on save, returning 409 and reloading on conflict.
-2. Bleach sanitiser on the save path.
-3. Share permissions as a column (`view` | `edit`) rather than a boolean, with the UI reflecting it.
-4. Postgres, so the deployment actually persists.
-5. Diff each version against its immediate predecessor as well as against current, with a toggle.
+1. Embed a Unicode TTF so PDF export handles Indic scripts.
+2. Optimistic concurrency on save, returning 409 and reloading on conflict.
+3. Bleach sanitiser on the save path.
+4. Share permissions as a column (`view` | `edit`) rather than a boolean, with the UI reflecting it.
+5. Postgres, so the deployment actually persists.
+6. Diff each version against its immediate predecessor as well as against current, with a toggle.

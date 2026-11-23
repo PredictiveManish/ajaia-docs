@@ -20,6 +20,7 @@
   </div>
   <div class="row">
     <span class="save" id="status"></span>
+    <a class="btn" href="/documents/{{ doc['id'] }}/export.pdf">Export PDF</a>
     <a class="btn" href="/documents/{{ doc['id'] }}/history">History{% if nver %} ({{ nver }}){% endif %}</a>
     <a class="btn" href="/documents">All documents</a>
   </div>
